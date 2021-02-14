@@ -3,6 +3,7 @@ const renderToString = require('react-dom/server').renderToString;
 const matchPath = require('react-router').matchPath;
 const path = require('path');
 const fs = require('fs');
+const configureStore = require('../src/configure-store').default;
 
 const initialState = {
   todos: [
@@ -64,6 +65,7 @@ exports.render = (routes) => {
           console.log(`SSR of ${req.path}`);
         }
 
+        const store = configureStore(initialState);
 
         /**
          * Convert JSX code to a HTML string that can be rendered server-side with
@@ -73,7 +75,7 @@ exports.render = (routes) => {
          * rendered HTML and only attach event handlers. 
          * (https://reactjs.org/docs/react-dom-server.html#rendertostring)
          */
-        const jsx = <App location={location}/>
+        const jsx = <App store={store} location={location}/>
         const reactDom = renderToString(jsx);
 
         /**
@@ -84,6 +86,9 @@ exports.render = (routes) => {
           htmlData.replace(
             '<div id="root"></div>',
             `<div id="root">${reactDom}</div>`
+          ).replace(
+            '__REDUX__',
+            JSON.stringify(store.getState())
           )
         );
       });
